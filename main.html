@@ -2,17 +2,84 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Word Quiz</title>
 <link rel="manifest" href="manifest.json">
 <style>
-body { margin: 0; font-family: Arial, sans-serif; background-color: white; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 100vh;}
-header { width: 100%; display: flex; justify-content: space-between; padding: 10px 20px; box-sizing: border-box;}
-button { padding: 10px 20px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer;}
-button:hover { transform: scale(1.05);}
-.word { font-size: 2rem; margin: 20px; text-align: center;}
-.answers { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px; width: 90%; max-width: 600px;}
-#progress { margin-top: auto; padding-bottom: 20px;}
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+}
+
+header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 20px;
+  box-sizing: border-box;
+  align-items: center;
+}
+
+button {
+  padding: 10px 20px;
+  font-weight: bold;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+button:hover {
+  transform: scale(1.05);
+}
+
+.word {
+  font-size: 2rem;
+  margin: 20px;
+  text-align: center;
+}
+
+.answers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin: 20px;
+  width: 90%;
+  max-width: 600px;
+}
+
+#progress {
+  margin-top: auto;
+  padding-bottom: 20px;
+  font-size: 1rem;
+}
+
+/* Специальные стили кнопок */
+#loadBtn { background-color: #4CAF50; color: white; }
+#loadBtn:hover { background-color: #45a049; }
+#switchBtn { font-size: 18px; background: transparent; }
+#switchBtn:hover { background-color: rgba(0,0,0,0.05); transform: scale(1.2); }
+#fiftyBtn { background-color: #2196F3; color: white; font-size: 14px; }
+#fiftyBtn:hover { background-color: #1976D2; }
+
+.answerBtn {
+  background-color: #f2f2f2;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 1rem;
+  height: 50px;
+}
+
+.answerBtn:hover { background-color: #e6e6e6; }
+.answerBtn.correct { background-color: #4CAF50; color: white; font-weight: bold; }
+.answerBtn.wrong { background-color: #F44336; color: white; font-weight: bold; }
+.answerBtn.disabled { background-color: #ddd; color: #666; }
 </style>
 </head>
 <body>
@@ -28,10 +95,10 @@ button:hover { transform: scale(1.05);}
 
 <div class="word" id="word"></div>
 <div class="answers" id="answers">
-  <button></button>
-  <button></button>
-  <button></button>
-  <button></button>
+  <button class="answerBtn"></button>
+  <button class="answerBtn"></button>
+  <button class="answerBtn"></button>
+  <button class="answerBtn"></button>
 </div>
 <div id="progress"></div>
 
@@ -79,10 +146,11 @@ function loadQuestion() {
   wordDiv.textContent = question;
   progressDiv.textContent = `${index+1} из ${words.length} (${correct_answers}/${wrong_answers})`;
 
-  answersDiv.querySelectorAll('button').forEach((btn,i)=>{
+  const buttons = answersDiv.querySelectorAll('.answerBtn');
+  buttons.forEach((btn,i)=>{
     btn.textContent = options[i];
     btn.disabled = false;
-    btn.style.backgroundColor = '#f2f2f2';
+    btn.className = 'answerBtn';
     btn.onclick = () => checkAnswer(btn, correct);
   });
   fiftyBtn.disabled = false;
@@ -90,25 +158,26 @@ function loadQuestion() {
 
 function checkAnswer(btn, correct) {
   if(btn.textContent === correct) correct_answers++; else wrong_answers++;
-  answersDiv.querySelectorAll('button').forEach(b=>{
+  const buttons = answersDiv.querySelectorAll('.answerBtn');
+  buttons.forEach(b=>{
     b.disabled = true;
-    if(b.textContent === correct) b.style.backgroundColor = '#4CAF50';
-    else if(b === btn) b.style.backgroundColor = '#F44336';
+    if(b.textContent === correct) b.classList.add('correct');
+    else if(b === btn) b.classList.add('wrong');
   });
   setTimeout(()=>{ index++; loadQuestion(); }, btn.textContent === correct ? 500 : 4000);
 }
 
 function useFifty() {
   const correct = reverse ? words[index].word : words[index].trans;
-  let wrongBtns = Array.from(answersDiv.querySelectorAll('button')).filter(b=>b.textContent!==correct && !b.disabled);
+  let wrongBtns = Array.from(answersDiv.querySelectorAll('.answerBtn')).filter(b=>b.textContent!==correct && !b.disabled);
   shuffle(wrongBtns);
-  wrongBtns.slice(0,2).forEach(b=>{ b.disabled=true; b.style.backgroundColor='#ddd'; });
+  wrongBtns.slice(0,2).forEach(b=>{ b.disabled=true; b.classList.add('disabled'); });
   fiftyBtn.disabled = true;
 }
 
 function shuffle(arr) { return arr.sort(()=>Math.random()-0.5); }
 
-// Service Worker registration для офлайн
+// Service Worker
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').then(()=>console.log('SW registered'));
 }
